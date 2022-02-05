@@ -1,5 +1,7 @@
 /**
  * @name XSOverlay
+ * @source https://github.com/Eidenz/XSOverlay-BetterDiscord/blob/main/XSOverlay.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js
  * @version 1.0.0
 */
 const request = require("request");
