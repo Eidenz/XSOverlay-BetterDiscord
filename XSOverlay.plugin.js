@@ -19,14 +19,14 @@ const config = {
                 github_username: "Eidenz"
             }
         ],
-    version: "1.0.0",
+    version: "1.0.1",
     description:
       "Adds support for XSOverlay using Notification API",
 	},
   changelog: [
     {
-      title: "First version",
-      items: ["Have fun :3"]
+      title: "Minor changes",
+      items: ["Replacing ping & role IDs with a temporary string"]
     }
   ]
   };
