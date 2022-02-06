@@ -2,7 +2,7 @@
  * @name XSOverlay
  * @source https://github.com/Eidenz/XSOverlay-BetterDiscord/blob/main/XSOverlay.plugin.js
  * @updateUrl https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js
- * @version 1.0.0
+ * @version 1.0.1
 */
 const request = require("request");
 const fs = require("fs");
@@ -104,6 +104,16 @@ module.exports = !global.ZeresPluginLibrary
       }
 
       function clearMessage(content) {
+        while(content.includes("<@")){
+          let toreplace = content.substring(content.indexOf("<@"));
+          toreplace = toreplace.substring(0, toreplace.indexOf(">")+1);
+          content = content.replace(toreplace, "[@user]");
+        }
+        while(content.includes("<&")){
+          let toreplace = content.substring(content.indexOf("<&"));
+          toreplace = toreplace.substring(0, toreplace.indexOf(">")+1);
+          content = content.replace(toreplace, "[@role]");
+        }
         return content.replace(new RegExp('<[^>]*>', 'g'), '');
       }
 
@@ -193,7 +203,7 @@ module.exports = !global.ZeresPluginLibrary
             volume: 0,
             audioPath: '',
             title: authorString,
-            content: finalMsg,
+            content: clearMessage(finalMsg),
             useBase64Icon: false,
             icon: '',
             sourceApp: 'Discord'
