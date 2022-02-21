@@ -26,7 +26,7 @@ const config = {
     changelog: [
       {
         title: "Feature",
-        items: ["Added a setting menu to tweak notifications settings"]
+        items: ["Added a setting menu to tweak notifications"]
       }
     ]
   };
