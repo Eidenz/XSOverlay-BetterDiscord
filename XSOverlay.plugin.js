@@ -2,7 +2,7 @@
  * @name XSOverlay
  * @source https://github.com/Eidenz/XSOverlay-BetterDiscord/blob/main/XSOverlay.plugin.js
  * @updateUrl https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js
- * @version 1.0.1
+ * @version 1.1
 */
 const request = require("request");
 const fs = require("fs");
@@ -19,16 +19,16 @@ const config = {
                 github_username: "Eidenz"
             }
         ],
-    version: "1.0.1",
-    description:
-      "Adds support for XSOverlay using Notification API",
-	},
-  changelog: [
-    {
-      title: "Minor changes",
-      items: ["Replacing ping & role IDs with a temporary string"]
-    }
-  ]
+        version: "1.1",
+        description:
+          "Adds support for XSOverlay using Notification API",
+      },
+    changelog: [
+      {
+        title: "Feature",
+        items: ["Added a setting menu to tweak notifications settings"]
+      }
+    ]
   };
 
 module.exports = !global.ZeresPluginLibrary
@@ -140,11 +140,70 @@ module.exports = !global.ZeresPluginLibrary
         }
 
         onStart() {
+          this.xsoverlayenabled = BdApi.loadData(config.info.name, "xsoverlayenabled") ?? true;
+          this.xsoverlaydm = BdApi.loadData(config.info.name, "xsoverlaydm") ?? true;
+          this.xsoverlayserver = BdApi.loadData(config.info.name, "xsoverlayserver") ?? true;
+          this.SwitchItem = BdApi.findModuleByDisplayName("SwitchItem");
           Dispatcher.subscribe("MESSAGE_CREATE", this.onMessage);
           Dispatcher.subscribe("FRIEND_REQUEST_ACCEPTED", this.friendRequest);
         }
 
+        getSettingsPanel() {
+          return () => {
+            const [state, dispatch] = BdApi.React.useReducer(currentState => {
+              const newState = !currentState;
+      
+              this.xsoverlayenabled = newState;
+              BdApi.saveData(config.info.name, "xsoverlayenabled", newState);
+      
+              return newState;
+
+            }, this.xsoverlayenabled);
+            const [statedm, dispatchdm] = BdApi.React.useReducer(currentState => {
+              const newState = !currentState;
+      
+              this.xsoverlaydm = newState;
+              BdApi.saveData(config.info.name, "xsoverlaydm", newState);
+      
+              return newState;
+
+            }, this.xsoverlaydm);
+            const [stateserver, dispatchserver] = BdApi.React.useReducer(currentState => {
+              const newState = !currentState;
+      
+              this.xsoverlayserver = newState;
+              BdApi.saveData(config.info.name, "xsoverlayserver", newState);
+      
+              return newState;
+
+            }, this.xsoverlayserver);
+
+            let settingsItems = [];
+
+            settingsItems.push(BdApi.React.createElement(this.SwitchItem, {
+              value: state,
+              note: "Enable receiving Discord notifications through XSOverlay.",
+              onChange: dispatch
+            }, "Enable notifications"));
+
+            settingsItems.push(BdApi.React.createElement(this.SwitchItem, {
+              value: statedm,
+              onChange: dispatchdm
+            }, "Enable DMs"));
+
+            settingsItems.push(BdApi.React.createElement(this.SwitchItem, {
+              value: stateserver,
+              onChange: dispatchserver
+            }, "Enable servers"));
+      
+            return settingsItems;
+          }
+        }
+
         onMessage({ message }) {
+          if(!this.xsoverlayenabled){
+            return;
+          }
           let finalMsg = message.content;
           const author = UserStore.getUser(message.author.id);
 		      const channel = ChannelStore.getChannel(message.channel_id);
@@ -158,15 +217,24 @@ module.exports = !global.ZeresPluginLibrary
           if (channel.guild_id) {
             const guild = GuildStore.getGuild(channel.guild_id);
             authorString = `${author.username} (${guild.name}, #${channel.name})`;
+            if(!this.xsoverlayserver){
+              return;
+            }
           }
           if (channel.type === ChannelTypes["GROUP_DM"]) {
             authorString = `${author.username} (${channel.name})`;
-			    if (!channel.name || channel.name === " " || channel.name === "") {
+			      if (!channel.name || channel.name === " " || channel.name === "") {
               authorString = `${author.username} (${channel.rawRecipients.map((e) => e.username).join(", ")})`;
+            }
+            if(!this.xsoverlaydm){
+              return;
             }
           }
           if (channel.type === ChannelTypes["DM"]) {
             authorString = `${author.username}`;
+            if(!this.xsoverlaydm){
+              return;
+            }
           }
 
           if (message.call) {
@@ -229,6 +297,9 @@ module.exports = !global.ZeresPluginLibrary
         }
 
         friendRequest({ user }) {
+          if(!this.xsoverlayenabled){
+            return;
+          }
           if (!this.settings.relationshipsNotis) return;
           user = UserStore.getUser(user.id);
           const data = JSON.stringify({
