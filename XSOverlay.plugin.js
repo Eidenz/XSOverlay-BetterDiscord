@@ -139,6 +139,15 @@ module.exports = !global.ZeresPluginLibrary
           };
         }
 
+        load() {
+          try {
+            global.ZeresPluginLibrary.PluginUpdater.checkForUpdate(config.info.name, config.info.version, config.info.updateUrl);
+          }
+          catch (err) {
+            console.error(this.getName(), "Plugin Updater could not be reached.", err);
+          }
+        }
+
         onStart() {
           this.xsoverlayenabled = BdApi.loadData(config.info.name, "xsoverlayenabled") ?? true;
           this.xsoverlaydm = BdApi.loadData(config.info.name, "xsoverlaydm") ?? true;
