@@ -21,7 +21,7 @@ const config = {
         ],
         version: "1.1",
         description:
-          "Adds support for XSOverlay using Notification API",
+          "Get your discord notifications in VR through XSOverlay!",
       },
     changelog: [
       {
