@@ -20,6 +20,7 @@ const config = {
             }
         ],
         version: "1.1",
+        updateUrl: "https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js",
         description:
           "Get your discord notifications in VR through XSOverlay!",
       },
