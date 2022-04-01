@@ -2,7 +2,7 @@
  * @name XSOverlay
  * @source https://github.com/Eidenz/XSOverlay-BetterDiscord/blob/main/XSOverlay.plugin.js
  * @updateUrl https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js
- * @version 1.1
+ * @version 1.2.0
 */
 const request = require("request");
 const fs = require("fs");
@@ -19,15 +19,16 @@ const config = {
                 github_username: "Eidenz"
             }
         ],
-        version: "1.1",
+        version: "1.2.0",
         updateUrl: "https://raw.githubusercontent.com/Eidenz/XSOverlay-BetterDiscord/main/XSOverlay.plugin.js",
         description:
           "Get your discord notifications in VR through XSOverlay!",
       },
     changelog: [
       {
-        title: "Feature",
-        items: ["Added a setting menu to tweak notifications"]
+        title: "New feature",
+        type: "added",
+        items: ["- Added user icons", "- Added username for mentions"]
       }
     ]
   };
@@ -105,16 +106,6 @@ module.exports = !global.ZeresPluginLibrary
       }
 
       function clearMessage(content) {
-        while(content.includes("<@")){
-          let toreplace = content.substring(content.indexOf("<@"));
-          toreplace = toreplace.substring(0, toreplace.indexOf(">")+1);
-          content = content.replace(toreplace, "[@user]");
-        }
-        while(content.includes("<&")){
-          let toreplace = content.substring(content.indexOf("<&"));
-          toreplace = toreplace.substring(0, toreplace.indexOf(">")+1);
-          content = content.replace(toreplace, "[@role]");
-        }
         return content.replace(new RegExp('<[^>]*>', 'g'), '');
       }
 
@@ -266,27 +257,61 @@ module.exports = !global.ZeresPluginLibrary
           }
 
           if (images[0]) {
-            finalMsg += " [image] ";
+            finalMsg += " [image:" + message.attachments[0].filename + "] ";
           }
           else if (message.attachments.length !== 0){
-            finalMsg += " [attachment] ";
+            finalMsg += " [attachment:" + message.attachments[0].filename + "] ";
           }
 
-          const data = JSON.stringify({
-            messageType: 1,
-            index: 0,
-            timeout: 5,
-            height: calculateHeight(clearMessage(finalMsg)),
-            opacity: 0.9,
-            volume: 0,
-            audioPath: '',
-            title: authorString,
-            content: clearMessage(finalMsg),
-            useBase64Icon: false,
-            icon: '',
-            sourceApp: 'Discord'
+          //mentions
+          for (const mention of message.mentions) {
+            finalMsg = finalMsg.replace(new RegExp(`<@!?${mention.id}>`, 'g'), `<color=#8a2be2><b>@${mention.username}</color></b>`);
+          }
+
+          //roles
+          if (message.mention_roles.length > 0) {
+            const { roles } = GuildStore.getGuild(message.guild_id);
+            for (const roleId of message.mention_roles) {
+              const role = roles[roleId];
+              finalMsg = finalMsg.replace(new RegExp(`<@&${roleId}>`, 'g'), `<b><color=#${parseInt(role.color).toString(16)}>@${role.name}</color></b>`);
+            }
+          }
+
+          //emotes
+          let matches = finalMsg.match(new RegExp('(<a?:\\w+:\\d+>)', 'g'));
+          if (matches) {
+            for (const match of matches) {
+              finalMsg = finalMsg.replace(new RegExp(`${match}`, 'g'), `:${match.split(':')[1]}:`);
+            }
+          }
+
+          //channel mentions
+          matches = finalMsg.match(new RegExp('<(#\\d+)>', 'g'));
+          if (matches) {
+            for (const match2 of matches) {
+              let channelId = match2.split('<#')[1];
+              channelId = channelId.substring(0, channelId.length - 1);
+              finalMsg = finalMsg.replace(new RegExp(`${match2}`, 'g'), `<b><color=#8a2be2>#${ChannelStore.getChannel(channelId).name}</color></b>`);
+            }
+          }
+
+          fetch(`https://cdn.discordapp.com/avatars/${author.id}/${author.avatar}.png?size=128`).then(response => response.arrayBuffer()).then(result => {
+            const data = JSON.stringify({
+              messageType: 1,
+              index: 0,
+              timeout: 5,
+              height: calculateHeight(clearMessage(finalMsg)),
+              opacity: 0.9,
+              volume: 0,
+              audioPath: '',
+              title: authorString,
+              content: finalMsg,
+              useBase64Icon: true,
+              icon: Buffer.from(result).toString('base64'),
+              sourceApp: 'Discord'
+            });
+            sendToXSOverlay(data);
           });
-          sendToXSOverlay(data);
         }
 
         supposedToNotify(message, channel) {
