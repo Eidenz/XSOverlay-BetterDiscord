@@ -114,6 +114,7 @@ module.exports = !global.ZeresPluginLibrary
           super();
 
           const om = this.onMessage.bind(this);
+		
           this.onMessage = (e) => {
             try {
               om(e);
